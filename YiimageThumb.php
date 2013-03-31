@@ -57,7 +57,7 @@ class YiimageThumb{
         {
             $this->cache = substr($this->image, 0, strrpos($this->image, "/")) . '/thumb_cache/';
         }
-
+		
         if(!is_dir($this->cache))
         {
             mkdir($this->cache);
@@ -68,7 +68,7 @@ class YiimageThumb{
             throw new YiimageThumbException("Directory `{$this->cache}` is not writable");
         }
 
-        if(!is_numeric($this->width) || !is_numeric($this->height))
+        if(!is_numeric($this->width) && !is_numeric($this->height))
         {
             throw new YiimageThumbException('Illegal width/height value');
         }
@@ -96,6 +96,16 @@ class YiimageThumb{
     {
         $this->thumb['offset_w'] = 0;
         $this->thumb['offset_h'] = 0;
+		//check auto width/height
+		if(!is_numeric($this->width) || !is_numeric($this->height)){
+			if(is_numeric($this->width)){
+				//calculate auto height
+				$this->height = ceil(($this->width * $this->image_source['height']) / $this->image_source['width']);
+			}else if(is_numeric($this->height)){
+				//calculate auto width
+				$this->width = ceil(($this->height * $this->image_source['width']) / $this->image_source['height']);
+			}
+		}
         $this->thumb['width'] = $this->width;
         $this->thumb['height'] = $this->height;
         $this->thumb['type'] = $this->image_source['type'];
@@ -158,10 +168,10 @@ class YiimageThumb{
 
         $file_url = str_replace(realpath(".") , '', $this->thumb['file']);
         $file_url = str_replace(array("\\","//"),array("/","/"), $file_url);
-
+		$file_url = Yii::app()->baseUrl . $file_url;
         if(file_exists($this->thumb['file'])){
             $img = CHtml::image($file_url, $this->imgAlt, $this->imgOptions);
-            if($this->link)
+            if(isset($this->link))
             {
                 $img_link = str_replace(realpath(".") , '', $this->image);
                 $img_link = str_replace(array("\\","//"),array("/","/"), $img_link);
@@ -208,7 +218,7 @@ class YiimageThumb{
 
         if ($this->thumb['type'] == 2)
         {
-            if(!$this->quality){
+            if(!isset($this->quality)){
                 $this->quality = 80;
             }
             imagejpeg($this->thumb['image'], $this->thumb['file'], $this->quality);
@@ -223,7 +233,7 @@ class YiimageThumb{
         imagedestroy($this->image_source['image']);
 
         $img = CHtml::image($file_url, $this->imgAlt, $this->imgOptions);
-        if($this->link)
+        if(isset($this->link))
         {
             $img_link = str_replace(realpath(".") , '', $this->image);
             $img_link = str_replace(array("\\","//"),array("/","/"), $img_link);
